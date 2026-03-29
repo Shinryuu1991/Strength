@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1D9E75">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Iron Log">
+  <title>Iron Log</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <div class="top-bar">
+      <div class="app-title">Iron Log</div>
+      <div class="top-actions">
+        <div class="edit-btn" id="editToggleBtn" onclick="toggleEditView()">Edit plan</div>
+        <div class="cycle-badge" id="cycleBadge" onclick="openCycleModal()">C1 · W1</div>
+      </div>
+    </div>
+
+    <div style="padding:.75rem 1.5rem 0">
+      <div class="view-toggle" id="mainViewToggle">
+        <div class="vt-btn active" onclick="switchView('log')">Session Log</div>
+        <div class="vt-btn" onclick="switchView('progress')">Progress</div>
+      </div>
+    </div>
+
+    <!-- LOG VIEW -->
+    <div class="view active" id="view-log">
+      <div class="session-header">
+        <div class="session-day" id="sessionDay">Monday — Push</div>
+        <div class="session-subtitle" id="sessionSubtitle"></div>
+      </div>
+      <div class="day-tabs" id="dayTabs"></div>
+      <div id="deloadBanner" class="deload-banner" style="display:none">
+        Deload week — 2 sets, 50–60% of working weight. Focus on form, not load.
+      </div>
+      <div id="exerciseArea"></div>
+      <button class="save-btn" onclick="saveSession()">Log Session</button>
+    </div>
+
+    <!-- PROGRESS VIEW -->
+    <div class="view" id="view-progress">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="divider"></div>
+      <div class="section-label">Lift progress</div>
+      <div class="lift-selector" id="liftSelector"></div>
+      <div class="chart-wrap">
+        <div style="position:relative;width:100%;height:260px"><canvas id="progressChart"></canvas></div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-label">Personal records</div>
+      <div class="pr-list" id="prList"></div>
+    </div>
+
+    <!-- EDIT VIEW -->
+    <div class="view" id="view-edit">
+      <div class="edit-header">
+        <button class="back-btn" onclick="closeEditView()">← Back</button>
+        <div class="edit-title">Edit programme</div>
+      </div>
+      <div class="edit-day-list" id="editDayList"></div>
+      <button class="add-day-btn" onclick="addDay()">+ Add training day</button>
+    </div>
+  </div>
+
+  <!-- Cycle modal (inline) -->
+  <div id="cycleModalContainer" style="display:none;padding:0 1rem 1rem">
+    <div class="modal-card">
+      <div class="modal-title">Set current position</div>
+      <div class="modal-row">
+        <div class="modal-field">
+          <label>Cycle</label>
+          <select id="cycleSelect">
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label>Week</label>
+          <select id="weekSelect">
+            <option value="1">W1 — Build</option>
+            <option value="2">W2 — Overload</option>
+            <option value="3">W3 — Push</option>
+            <option value="4">W4 — Deload</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="confirm-btn" onclick="closeCycleModal()">Confirm</button>
+        <button class="cancel-btn" onclick="cancelCycleModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
