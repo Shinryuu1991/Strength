@@ -88,6 +88,15 @@ function buildDayTabs() {
 }
 
 /* ── LOG VIEW ── */
+function parseRepTarget(target) {
+  const m = target.match(/\d+$/);
+  return m ? parseInt(m[0]) : null;
+}
+
+function getExerciseData(key, exName) {
+  return (state.logData[key] && state.logData[key][exName]) || [];
+}
+
 function renderLogView() {
   const dayObj = state.programme.find(d => d.day === state.currentDay);
   const isDeload = state.week === 4;
@@ -111,75 +120,112 @@ function renderLogView() {
 
   dayObj.exercises.forEach((ex, ei) => {
     if (ex.type !== lastType) {
-      html += `<div class="section-label" style="padding-top:${lastType ? '.75rem' : '0'}">${ex.type === 'compound' ? 'Compound' : 'Isolation / Core'}</div>`;
+      html += '<div class="section-label" style="padding-top:' + (lastType ? '.75rem' : '0') + '">' + (ex.type === 'compound' ? 'Compound' : 'Isolation / Core') + '</div>';
       lastType = ex.type;
     }
     const setsToShow = isDeload ? Math.min(2, ex.sets) : ex.sets;
-    const isPR = prs[ex.name] && saved[ex.name] && saved[ex.name][0] && saved[ex.name][0].kg && parseFloat(saved[ex.name][0].kg) >= prs[ex.name];
     const exSets = saved[ex.name] || [];
-    const feelVal = (exSets.find(s => s && s.feel) || {}).feel || '';
-    html += `<div class="exercise-card ${ex.type}">
-      <div class="exercise-name-row">
-        <div class="exercise-name">${ex.name}</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <select class="feel-select-ex" data-ex="${ei}" onchange="handleFeelEx(this)" style="font-family:var(--fm);font-size:12px;padding:3px 6px;border:0.5px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2)">
-            <option value="">feel —</option>
-            <option value="E" ${feelVal==='E'?'selected':''}>E — Easy</option>
-            <option value="M" ${feelVal==='M'?'selected':''}>M — Moderate</option>
-            <option value="H" ${feelVal==='H'?'selected':''}>H — Hard</option>
-            <option value="F" ${feelVal==='F'?'selected':''}>F — Failed</option>
-          </select>
-          ${isPR ? '<div class="pr-badge">PR</div>' : `<div class="target-badge">${ex.target}</div>`}
-        </div>
-      </div>
-      <div class="col-header" style="grid-template-columns:28px 1fr 1fr">
-        <div class="col-label">Set</div><div class="col-label">kg</div>
-        <div class="col-label">Reps</div>
-      </div>
-      <div class="set-rows">`;
-    for (let s = 0; s < setsToShow; s++) {
-      const sv = exSets[s] || {};
-      html += `<div class="set-row" style="grid-template-columns:28px 1fr 1fr">
-        <div class="set-num">${s + 1}</div>
-        <input class="set-input" type="number" inputmode="decimal" min="0" step="0.5" placeholder="—" value="${sv.kg || ''}" data-ex="${ei}" data-set="${s}" data-field="kg" oninput="handleInput(this)" onblur="propagateField(${ei},${s},'kg',this.value,${setsToShow})">
-        <input class="set-input" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${sv.reps || ''}" data-ex="${ei}" data-set="${s}" data-field="reps" oninput="handleInput(this)" onblur="propagateField(${ei},${s},'reps',this.value,${setsToShow})">
-      </div>`;
-    }
-    html += `</div></div>`;
+    const kg = (exSets[0] && exSets[0].kg) || '';
+    const reps = (exSets[0] && exSets[0].reps) || '';
+    const feelVal = (exSets.find(function(s) { return s && s.feel; }) || {}).feel || '';
+    const repTarget = parseRepTarget(ex.target);
+    const isPR = prs[ex.name] && kg && parseFloat(kg) >= prs[ex.name];
+
+    // pass/fail: logged reps < target on any set (use same reps for all sets)
+    const repsNum = parseInt(reps);
+    const failed = reps !== '' && repTarget !== null && repsNum < repTarget;
+    const passed = reps !== '' && repTarget !== null && repsNum >= repTarget;
+
+    const statusBadge = failed
+      ? '<div style="font-family:var(--fm);font-size:11px;background:var(--danger-bg);color:var(--danger-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--danger)">fail</div>'
+      : passed
+        ? '<div style="font-family:var(--fm);font-size:11px;background:var(--accent-bg);color:var(--accent-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--accent)">pass</div>'
+        : '';
+
+    html += '<div class="exercise-card ' + ex.type + '" id="excard-' + ei + '">'
+      + '<div class="exercise-name-row">'
+        + '<div class="exercise-name">' + ex.name + '</div>'
+        + '<div style="display:flex;align-items:center;gap:6px">'
+          + '<select class="feel-select-ex" data-ex="' + ei + '" onchange="handleFeelEx(this)" style="font-family:var(--fm);font-size:12px;padding:3px 6px;border:0.5px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2)">'
+            + '<option value="">feel —</option>'
+            + '<option value="E"' + (feelVal==='E'?' selected':'') + '>E — Easy</option>'
+            + '<option value="M"' + (feelVal==='M'?' selected':'') + '>M — Moderate</option>'
+            + '<option value="H"' + (feelVal==='H'?' selected':'') + '>H — Hard</option>'
+            + '<option value="F"' + (feelVal==='F'?' selected':'') + '>F — Failed</option>'
+          + '</select>'
+          + (isPR ? '<div class="pr-badge">PR</div>' : statusBadge || ('<div class="target-badge">' + ex.target + '</div>'))
+        + '</div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 14px 12px;align-items:end">'
+        + '<div>'
+            + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">kg</div>'
+            + '<input class="set-input" type="number" inputmode="decimal" min="0" step="0.5" placeholder="—" value="' + kg + '" data-ex="' + ei + '" data-field="kg" oninput="handleExInput(this)">'
+        + '</div>'
+        + '<div>'
+            + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">reps</div>'
+            + '<input class="set-input" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="' + reps + '" data-ex="' + ei + '" data-field="reps" oninput="handleExInput(this)">'
+        + '</div>'
+        + '<div>'
+            + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">sets</div>'
+            + '<div style="font-family:var(--fm);font-size:14px;color:var(--text);text-align:center;padding:8px 0;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2)">' + setsToShow + '</div>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
   });
   document.getElementById('exerciseArea').innerHTML = html;
 }
 
-function handleInput(el) {
+function handleExInput(el) {
   const dayObj = state.programme.find(d => d.day === state.currentDay);
   if (!dayObj) return;
   const key = getSessionKey(dayObj.day);
   if (!state.logData[key]) state.logData[key] = {};
-  const ex = dayObj.exercises[parseInt(el.dataset.ex)];
-  const s = parseInt(el.dataset.set);
-  if (!state.logData[key][ex.name]) state.logData[key][ex.name] = [];
-  if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
-  state.logData[key][ex.name][s][el.dataset.field] = el.value;
-}
-
-function propagateField(ei, setIndex, field, value, totalSets) {
-  if (setIndex !== 0 || !value) return;
-  const dayObj = state.programme.find(d => d.day === state.currentDay);
-  if (!dayObj) return;
-  const key = getSessionKey(dayObj.day);
+  const ei = parseInt(el.dataset.ex);
   const ex = dayObj.exercises[ei];
-  if (!state.logData[key]) state.logData[key] = {};
+  const isDeload = state.week === 4;
+  const setsToShow = isDeload ? Math.min(2, ex.sets) : ex.sets;
   if (!state.logData[key][ex.name]) state.logData[key][ex.name] = [];
-  for (let s = 1; s < totalSets; s++) {
+  // write same value to all sets
+  for (let s = 0; s < setsToShow; s++) {
     if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
-    if (!state.logData[key][ex.name][s][field]) {
-      state.logData[key][ex.name][s][field] = value;
+    state.logData[key][ex.name][s][el.dataset.field] = el.value;
+  }
+  // update pass/fail badge live
+  const exSets = state.logData[key][ex.name];
+  const kg = (exSets[0] && exSets[0].kg) || '';
+  const reps = (exSets[0] && exSets[0].reps) || '';
+  const repTarget = parseRepTarget(ex.target);
+  const repsNum = parseInt(reps);
+  const prs = computePRs();
+  const isPR = prs[ex.name] && kg && parseFloat(kg) >= prs[ex.name];
+  const failed = reps !== '' && repTarget !== null && repsNum < repTarget;
+  const passed = reps !== '' && repTarget !== null && repsNum >= repTarget;
+  const card = document.getElementById('excard-' + ei);
+  if (card) {
+    const badgeSlot = card.querySelector('.pr-badge, .target-badge, [data-badge]');
+    // find the last element in the name-row flex container (the badge area)
+    const nameRow = card.querySelector('.exercise-name-row > div:last-child');
+    if (nameRow) {
+      // remove old badge (last child after feel select)
+      const oldBadge = nameRow.lastElementChild;
+      if (oldBadge && oldBadge !== nameRow.querySelector('select')) oldBadge.remove();
+      const badge = document.createElement('div');
+      if (isPR) {
+        badge.className = 'pr-badge';
+        badge.textContent = 'PR';
+      } else if (failed) {
+        badge.style.cssText = 'font-family:var(--fm);font-size:11px;background:var(--danger-bg);color:var(--danger-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--danger)';
+        badge.textContent = 'fail';
+      } else if (passed) {
+        badge.style.cssText = 'font-family:var(--fm);font-size:11px;background:var(--accent-bg);color:var(--accent-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--accent)';
+        badge.textContent = 'pass';
+      } else {
+        badge.className = 'target-badge';
+        badge.textContent = ex.target;
+      }
+      nameRow.appendChild(badge);
     }
   }
-  document.querySelectorAll('[data-ex="' + ei + '"][data-field="' + field + '"]').forEach(function(input) {
-    const s = parseInt(input.dataset.set);
-    if (s > 0 && !input.value) input.value = value;
-  });
 }
 
 function handleFeelEx(el) {
