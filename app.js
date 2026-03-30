@@ -68,7 +68,7 @@ function init() {
   loadState();
   buildDayTabs();
   renderLogView();
-  updateCycleBadge();
+  updateCycleButtons();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
@@ -529,30 +529,73 @@ function addDay() {
   setTimeout(() => { const el = document.getElementById('renameDay_' + (state.programme.length - 1)); if (el) { el.focus(); el.select(); } }, 50);
 }
 
-/* ── CYCLE MODAL ── */
-function updateCycleBadge() {
-  document.getElementById('cycleBadge').textContent = `C${state.cycle} · W${state.week}`;
+/* ── CYCLE / WEEK DROPDOWNS ── */
+function updateCycleButtons() {
+  document.getElementById('cycleBtn').textContent = 'C' + state.cycle;
+  document.getElementById('weekBtn').textContent = 'W' + state.week;
+  // mark selected options
+  document.querySelectorAll('#cycleDropdown .cw-option').forEach(function(el, i) {
+    el.classList.toggle('selected', i + 1 === state.cycle);
+  });
+  document.querySelectorAll('#weekDropdown .cw-option').forEach(function(el, i) {
+    el.classList.toggle('selected', i + 1 === state.week);
+  });
 }
 
-function openCycleModal() {
-  document.getElementById('cycleSelect').value = state.cycle;
-  document.getElementById('weekSelect').value = state.week;
-  const mc = document.getElementById('cycleModalContainer');
-  mc.style.display = mc.style.display === 'none' ? 'block' : 'none';
+function toggleDropdown(which) {
+  var cycleDD = document.getElementById('cycleDropdown');
+  var weekDD = document.getElementById('weekDropdown');
+  var cycleBtn = document.getElementById('cycleBtn');
+  var weekBtn = document.getElementById('weekBtn');
+  if (which === 'cycle') {
+    var isOpen = cycleDD.classList.contains('open');
+    cycleDD.classList.toggle('open', !isOpen);
+    cycleBtn.classList.toggle('active', !isOpen);
+    weekDD.classList.remove('open');
+    weekBtn.classList.remove('active');
+  } else {
+    var isOpen = weekDD.classList.contains('open');
+    weekDD.classList.toggle('open', !isOpen);
+    weekBtn.classList.toggle('active', !isOpen);
+    cycleDD.classList.remove('open');
+    cycleBtn.classList.remove('active');
+  }
 }
 
-function closeCycleModal() {
-  state.cycle = parseInt(document.getElementById('cycleSelect').value);
-  state.week = parseInt(document.getElementById('weekSelect').value);
-  updateCycleBadge();
+function setCycle(c) {
+  state.cycle = c;
+  document.getElementById('cycleDropdown').classList.remove('open');
+  document.getElementById('cycleBtn').classList.remove('active');
+  updateCycleButtons();
   renderLogView();
+  if (state.currentView === 'progress') renderProgressView();
   saveState();
-  document.getElementById('cycleModalContainer').style.display = 'none';
+  showToast('Cycle ' + c);
 }
 
-function cancelCycleModal() {
-  document.getElementById('cycleModalContainer').style.display = 'none';
+function setWeek(w) {
+  state.week = w;
+  document.getElementById('weekDropdown').classList.remove('open');
+  document.getElementById('weekBtn').classList.remove('active');
+  updateCycleButtons();
+  renderLogView();
+  if (state.currentView === 'progress') renderProgressView();
+  saveState();
+  var labels = ['Build', 'Overload', 'Push', 'Deload'];
+  showToast('Week ' + w + ' — ' + labels[w - 1]);
 }
+
+// close dropdowns when tapping outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#cycleBtn') && !e.target.closest('#cycleDropdown')) {
+    document.getElementById('cycleDropdown').classList.remove('open');
+    document.getElementById('cycleBtn').classList.remove('active');
+  }
+  if (!e.target.closest('#weekBtn') && !e.target.closest('#weekDropdown')) {
+    document.getElementById('weekDropdown').classList.remove('open');
+    document.getElementById('weekBtn').classList.remove('active');
+  }
+});
 
 /* ── TOAST ── */
 function showToast(msg) {

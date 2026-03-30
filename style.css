@@ -76,16 +76,54 @@ html, body {
 
 .top-actions { display: flex; gap: 8px; align-items: center; }
 
-.cycle-badge {
+.cycle-btn {
   font-family: var(--fm);
   font-size: 12px;
   background: var(--accent-bg);
   color: var(--accent-text);
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
   border: 0.5px solid var(--accent);
   cursor: pointer;
   user-select: none;
+  font-weight: 500;
+}
+.cycle-btn:hover { background: var(--accent); color: #fff; }
+.cycle-btn.active { background: var(--accent); color: #fff; }
+
+.cw-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg);
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius-lg);
+  min-width: 140px;
+  z-index: 200;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.cw-dropdown.open { display: block; }
+.cw-dropdown-label {
+  font-family: var(--fm);
+  font-size: 10px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 8px 12px 4px;
+}
+.cw-option {
+  font-family: var(--fm);
+  font-size: 13px;
+  color: var(--text);
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.cw-option:hover { background: var(--bg2); }
+.cw-option.selected {
+  color: var(--accent);
+  font-weight: 500;
 }
 
 .edit-btn {
@@ -676,69 +714,7 @@ html, body {
 .add-day-btn:hover { background: var(--accent-bg); }
 
 /* ── CYCLE MODAL ── */
-.modal-card {
-  background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-}
-.modal-title {
-  font-family: var(--fd);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 1rem;
-}
-.modal-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 1rem;
-}
-.modal-field label {
-  font-family: var(--fm);
-  font-size: 11px;
-  color: var(--text2);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  display: block;
-  margin-bottom: 4px;
-}
-.modal-field select {
-  width: 100%;
-  padding: 8px;
-  font-family: var(--fm);
-  font-size: 13px;
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg2);
-  color: var(--text);
-}
-.confirm-btn {
-  flex: 1;
-  padding: 10px;
-  font-family: var(--fd);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  background: var(--text);
-  color: var(--bg);
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-.cancel-btn {
-  padding: 10px 14px;
-  font-family: var(--fd);
-  font-size: 13px;
-  font-weight: 600;
-  background: none;
-  color: var(--text2);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
+
 
 /* ── DIVIDER ── */
 .divider { height: 0.5px; background: var(--border); margin: 1.25rem 0 1rem; }

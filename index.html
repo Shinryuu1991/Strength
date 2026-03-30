@@ -22,7 +22,26 @@
       <div class="app-title">Iron Log</div>
       <div class="top-actions">
         <div class="edit-btn" id="editToggleBtn" onclick="toggleEditView()">Edit plan</div>
-        <div class="cycle-badge" id="cycleBadge" onclick="openCycleModal()">C1 · W1</div>
+        <div style="position:relative">
+          <div class="cycle-btn" id="cycleBtn" onclick="toggleDropdown('cycle')">C1</div>
+          <div class="cw-dropdown" id="cycleDropdown">
+            <div class="cw-dropdown-label">Cycle</div>
+            <div class="cw-option" onclick="setCycle(1)">Cycle 1</div>
+            <div class="cw-option" onclick="setCycle(2)">Cycle 2</div>
+            <div class="cw-option" onclick="setCycle(3)">Cycle 3</div>
+            <div class="cw-option" onclick="setCycle(4)">Cycle 4</div>
+          </div>
+        </div>
+        <div style="position:relative">
+          <div class="cycle-btn" id="weekBtn" onclick="toggleDropdown('week')">W1</div>
+          <div class="cw-dropdown" id="weekDropdown">
+            <div class="cw-dropdown-label">Week</div>
+            <div class="cw-option" onclick="setWeek(1)">W1 — Build</div>
+            <div class="cw-option" onclick="setWeek(2)">W2 — Overload</div>
+            <div class="cw-option" onclick="setWeek(3)">W3 — Push</div>
+            <div class="cw-option" onclick="setWeek(4)">W4 — Deload</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -69,34 +88,6 @@
       </div>
       <div class="edit-day-list" id="editDayList"></div>
       <button class="add-day-btn" onclick="addDay()">+ Add training day</button>
-    </div>
-  </div>
-
-  <!-- Cycle modal (inline) -->
-  <div id="cycleModalContainer" style="display:none;padding:0 1rem 1rem">
-    <div class="modal-card">
-      <div class="modal-title">Set current position</div>
-      <div class="modal-row">
-        <div class="modal-field">
-          <label>Cycle</label>
-          <select id="cycleSelect">
-            <option>1</option><option>2</option><option>3</option><option>4</option>
-          </select>
-        </div>
-        <div class="modal-field">
-          <label>Week</label>
-          <select id="weekSelect">
-            <option value="1">W1 — Build</option>
-            <option value="2">W2 — Overload</option>
-            <option value="3">W3 — Push</option>
-            <option value="4">W4 — Deload</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="confirm-btn" onclick="closeCycleModal()">Confirm</button>
-        <button class="cancel-btn" onclick="cancelCycleModal()">Cancel</button>
-      </div>
     </div>
   </div>
 
