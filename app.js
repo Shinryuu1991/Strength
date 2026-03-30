@@ -116,29 +116,33 @@ function renderLogView() {
     }
     const setsToShow = isDeload ? Math.min(2, ex.sets) : ex.sets;
     const isPR = prs[ex.name] && saved[ex.name] && saved[ex.name][0] && saved[ex.name][0].kg && parseFloat(saved[ex.name][0].kg) >= prs[ex.name];
+    const exSets = saved[ex.name] || [];
+    const feelVal = (exSets.find(s => s && s.feel) || {}).feel || '';
     html += `<div class="exercise-card ${ex.type}">
       <div class="exercise-name-row">
         <div class="exercise-name">${ex.name}</div>
-        ${isPR ? '<div class="pr-badge">PR</div>' : `<div class="target-badge">${ex.target}</div>`}
+        <div style="display:flex;align-items:center;gap:8px">
+          <select class="feel-select-ex" data-ex="${ei}" onchange="handleFeelEx(this)" style="font-family:var(--fm);font-size:12px;padding:3px 6px;border:0.5px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2)">
+            <option value="">feel —</option>
+            <option value="E" ${feelVal==='E'?'selected':''}>E — Easy</option>
+            <option value="M" ${feelVal==='M'?'selected':''}>M — Moderate</option>
+            <option value="H" ${feelVal==='H'?'selected':''}>H — Hard</option>
+            <option value="F" ${feelVal==='F'?'selected':''}>F — Failed</option>
+          </select>
+          ${isPR ? '<div class="pr-badge">PR</div>' : `<div class="target-badge">${ex.target}</div>`}
+        </div>
       </div>
-      <div class="col-header">
+      <div class="col-header" style="grid-template-columns:28px 1fr 1fr">
         <div class="col-label">Set</div><div class="col-label">kg</div>
-        <div class="col-label">Reps</div><div class="col-label">Feel</div>
+        <div class="col-label">Reps</div>
       </div>
       <div class="set-rows">`;
     for (let s = 0; s < setsToShow; s++) {
-      const sv = (saved[ex.name] && saved[ex.name][s]) || {};
-      html += `<div class="set-row">
+      const sv = exSets[s] || {};
+      html += `<div class="set-row" style="grid-template-columns:28px 1fr 1fr">
         <div class="set-num">${s + 1}</div>
-        <input class="set-input" type="number" inputmode="decimal" min="0" step="0.5" placeholder="—" value="${sv.kg || ''}" data-ex="${ei}" data-set="${s}" data-field="kg" oninput="handleInput(this)">
-        <input class="set-input" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${sv.reps || ''}" data-ex="${ei}" data-set="${s}" data-field="reps" oninput="handleInput(this)">
-        <select class="feel-select" data-ex="${ei}" data-set="${s}" data-field="feel" onchange="handleInput(this)">
-          <option value="">—</option>
-          <option value="E" ${sv.feel === 'E' ? 'selected' : ''}>E — Easy</option>
-          <option value="M" ${sv.feel === 'M' ? 'selected' : ''}>M — Moderate</option>
-          <option value="H" ${sv.feel === 'H' ? 'selected' : ''}>H — Hard</option>
-          <option value="F" ${sv.feel === 'F' ? 'selected' : ''}>F — Failed</option>
-        </select>
+        <input class="set-input" type="number" inputmode="decimal" min="0" step="0.5" placeholder="—" value="${sv.kg || ''}" data-ex="${ei}" data-set="${s}" data-field="kg" oninput="handleInput(this)" onblur="propagateField(${ei},${s},'kg',this.value,${setsToShow})">
+        <input class="set-input" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${sv.reps || ''}" data-ex="${ei}" data-set="${s}" data-field="reps" oninput="handleInput(this)" onblur="propagateField(${ei},${s},'reps',this.value,${setsToShow})">
       </div>`;
     }
     html += `</div></div>`;
@@ -156,6 +160,41 @@ function handleInput(el) {
   if (!state.logData[key][ex.name]) state.logData[key][ex.name] = [];
   if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
   state.logData[key][ex.name][s][el.dataset.field] = el.value;
+}
+
+function propagateField(ei, setIndex, field, value, totalSets) {
+  if (setIndex !== 0 || !value) return;
+  const dayObj = state.programme.find(d => d.day === state.currentDay);
+  if (!dayObj) return;
+  const key = getSessionKey(dayObj.day);
+  const ex = dayObj.exercises[ei];
+  if (!state.logData[key]) state.logData[key] = {};
+  if (!state.logData[key][ex.name]) state.logData[key][ex.name] = [];
+  for (let s = 1; s < totalSets; s++) {
+    if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
+    if (!state.logData[key][ex.name][s][field]) {
+      state.logData[key][ex.name][s][field] = value;
+    }
+  }
+  document.querySelectorAll('[data-ex="' + ei + '"][data-field="' + field + '"]').forEach(function(input) {
+    const s = parseInt(input.dataset.set);
+    if (s > 0 && !input.value) input.value = value;
+  });
+}
+
+function handleFeelEx(el) {
+  const dayObj = state.programme.find(d => d.day === state.currentDay);
+  if (!dayObj) return;
+  const key = getSessionKey(dayObj.day);
+  if (!state.logData[key]) state.logData[key] = {};
+  const ei = parseInt(el.dataset.ex);
+  const ex = dayObj.exercises[ei];
+  const setsToShow = state.week === 4 ? Math.min(2, ex.sets) : ex.sets;
+  if (!state.logData[key][ex.name]) state.logData[key][ex.name] = [];
+  for (let s = 0; s < setsToShow; s++) {
+    if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
+    state.logData[key][ex.name][s].feel = el.value;
+  }
 }
 
 function saveSession() { saveState(); showToast('Session logged — ' + getWeekKey()); }
