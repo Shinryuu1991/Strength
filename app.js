@@ -542,7 +542,8 @@ function updateCycleButtons() {
   });
 }
 
-function toggleDropdown(which) {
+function toggleDropdown(which, event) {
+  event.stopPropagation();
   var cycleDD = document.getElementById('cycleDropdown');
   var weekDD = document.getElementById('weekDropdown');
   var cycleBtn = document.getElementById('cycleBtn');
@@ -562,7 +563,8 @@ function toggleDropdown(which) {
   }
 }
 
-function setCycle(c) {
+function setCycle(c, event) {
+  event.stopPropagation();
   state.cycle = c;
   document.getElementById('cycleDropdown').classList.remove('open');
   document.getElementById('cycleBtn').classList.remove('active');
@@ -573,7 +575,8 @@ function setCycle(c) {
   showToast('Cycle ' + c);
 }
 
-function setWeek(w) {
+function setWeek(w, event) {
+  event.stopPropagation();
   state.week = w;
   document.getElementById('weekDropdown').classList.remove('open');
   document.getElementById('weekBtn').classList.remove('active');
@@ -586,15 +589,11 @@ function setWeek(w) {
 }
 
 // close dropdowns when tapping outside
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#cycleBtn') && !e.target.closest('#cycleDropdown')) {
-    document.getElementById('cycleDropdown').classList.remove('open');
-    document.getElementById('cycleBtn').classList.remove('active');
-  }
-  if (!e.target.closest('#weekBtn') && !e.target.closest('#weekDropdown')) {
-    document.getElementById('weekDropdown').classList.remove('open');
-    document.getElementById('weekBtn').classList.remove('active');
-  }
+document.addEventListener('click', function() {
+  document.getElementById('cycleDropdown').classList.remove('open');
+  document.getElementById('cycleBtn').classList.remove('active');
+  document.getElementById('weekDropdown').classList.remove('open');
+  document.getElementById('weekBtn').classList.remove('active');
 });
 
 /* ── TOAST ── */

@@ -23,23 +23,23 @@
       <div class="top-actions">
         <div class="edit-btn" id="editToggleBtn" onclick="toggleEditView()">Edit plan</div>
         <div style="position:relative">
-          <div class="cycle-btn" id="cycleBtn" onclick="toggleDropdown('cycle')">C1</div>
+          <div class="cycle-btn" id="cycleBtn" onclick="toggleDropdown('cycle',event)">C1</div>
           <div class="cw-dropdown" id="cycleDropdown">
             <div class="cw-dropdown-label">Cycle</div>
-            <div class="cw-option" onclick="setCycle(1)">Cycle 1</div>
-            <div class="cw-option" onclick="setCycle(2)">Cycle 2</div>
-            <div class="cw-option" onclick="setCycle(3)">Cycle 3</div>
-            <div class="cw-option" onclick="setCycle(4)">Cycle 4</div>
+            <div class="cw-option" onclick="setCycle(1,event)">Cycle 1</div>
+            <div class="cw-option" onclick="setCycle(2,event)">Cycle 2</div>
+            <div class="cw-option" onclick="setCycle(3,event)">Cycle 3</div>
+            <div class="cw-option" onclick="setCycle(4,event)">Cycle 4</div>
           </div>
         </div>
         <div style="position:relative">
-          <div class="cycle-btn" id="weekBtn" onclick="toggleDropdown('week')">W1</div>
+          <div class="cycle-btn" id="weekBtn" onclick="toggleDropdown('week',event)">W1</div>
           <div class="cw-dropdown" id="weekDropdown">
             <div class="cw-dropdown-label">Week</div>
-            <div class="cw-option" onclick="setWeek(1)">W1 — Build</div>
-            <div class="cw-option" onclick="setWeek(2)">W2 — Overload</div>
-            <div class="cw-option" onclick="setWeek(3)">W3 — Push</div>
-            <div class="cw-option" onclick="setWeek(4)">W4 — Deload</div>
+            <div class="cw-option" onclick="setWeek(1,event)">W1 — Build</div>
+            <div class="cw-option" onclick="setWeek(2,event)">W2 — Overload</div>
+            <div class="cw-option" onclick="setWeek(3,event)">W3 — Push</div>
+            <div class="cw-option" onclick="setWeek(4,event)">W4 — Deload</div>
           </div>
         </div>
       </div>
