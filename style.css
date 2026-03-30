@@ -393,6 +393,7 @@ html, body {
   -webkit-appearance: none;
 }
 .set-input:focus { outline: none; border-color: var(--accent); }
+.set-fail { border-color: var(--danger) !important; color: var(--danger); }
 
 .feel-select {
   font-family: var(--fm);

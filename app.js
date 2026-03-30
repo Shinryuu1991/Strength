@@ -127,25 +127,35 @@ function renderLogView() {
     const setsToShow = isDeload ? Math.min(2, ex.sets) : ex.sets;
     const exSets = saved[ex.name] || [];
     const kg = (exSets[0] && exSets[0].kg) || '';
-    const reps = (exSets[0] && exSets[0].reps) || '';
     const feelVal = (exSets.find(function(s) { return s && s.feel; }) || {}).feel || '';
     const repTarget = parseRepTarget(ex.target);
     const isPR = prs[ex.name] && kg && parseFloat(kg) >= prs[ex.name];
 
-    // pass/fail: logged reps < target on any set (use same reps for all sets)
-    const repsNum = parseInt(reps);
-    const failed = reps !== '' && repTarget !== null && repsNum < repTarget;
-    const passed = reps !== '' && repTarget !== null && repsNum >= repTarget;
+    // pass/fail: any set with logged reps below target
+    const anyLogged = exSets.some(function(s) { return s && s.reps !== undefined && s.reps !== ''; });
+    const anyFail = repTarget !== null && exSets.some(function(s) { return s && s.reps !== '' && s.reps !== undefined && parseInt(s.reps) < repTarget; });
+    const allPass = anyLogged && !anyFail;
 
-    const statusBadge = failed
+    const statusBadge = anyFail
       ? '<div class="fail-badge">fail</div>'
-      : passed
+      : allPass
         ? '<div class="pass-badge">pass</div>'
         : '';
 
-    const noteKey = 'note_' + ei;
     const savedNote = (saved['__notes__'] && saved['__notes__'][ex.name]) || '';
     const noteOpen = state.openNotes && state.openNotes[getSessionKey(dayObj.day) + '_' + ei];
+
+    // build per-set rep inputs
+    let repInputs = '';
+    for (let s = 0; s < setsToShow; s++) {
+      const sv = exSets[s] || {};
+      const repVal = sv.reps || '';
+      const setFailed = repTarget !== null && repVal !== '' && parseInt(repVal) < repTarget;
+      repInputs += '<div>'
+        + '<div style="font-family:var(--fm);font-size:10px;color:' + (setFailed ? 'var(--danger)' : 'var(--text2)') + ';text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">S' + (s+1) + '</div>'
+        + '<input class="set-input' + (setFailed ? ' set-fail' : '') + '" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="' + repVal + '" data-ex="' + ei + '" data-set="' + s + '" data-field="reps" oninput="handleRepInput(this)">'
+      + '</div>';
+    }
 
     html += '<div class="exercise-card ' + ex.type + '" id="excard-' + ei + '">'
       + '<div class="exercise-name-row">'
@@ -161,22 +171,15 @@ function renderLogView() {
         + '</div>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:6px;padding:0 14px 8px">'
-        + '<div class="target-badge" id="targetbadge-' + ei + '">' + ex.target + '</div>'
+        + '<div class="target-badge">' + ex.target + '</div>'
         + '<div id="statusbadge-' + ei + '">' + (isPR ? '<div class="pr-star">★ PR</div>' : statusBadge) + '</div>'
       + '</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 14px 10px;align-items:end">'
+      + '<div style="display:grid;grid-template-columns:1.2fr ' + Array(setsToShow).fill('1fr').join(' ') + ';gap:8px;padding:0 14px 10px;align-items:end">'
         + '<div>'
-            + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">kg</div>'
-            + '<input class="set-input" type="number" inputmode="decimal" min="0" step="0.5" placeholder="—" value="' + kg + '" data-ex="' + ei + '" data-field="kg" oninput="handleExInput(this)">'
+          + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">kg</div>'
+          + '<input class="set-input" type="number" inputmode="decimal" min="0" step="0.5" placeholder="—" value="' + kg + '" data-ex="' + ei + '" data-field="kg" oninput="handleKgInput(this)">'
         + '</div>'
-        + '<div>'
-            + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">reps</div>'
-            + '<input class="set-input" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="' + reps + '" data-ex="' + ei + '" data-field="reps" oninput="handleExInput(this)">'
-        + '</div>'
-        + '<div>'
-            + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">sets</div>'
-            + '<div style="font-family:var(--fm);font-size:14px;color:var(--text);text-align:center;padding:8px 0;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2)">' + setsToShow + '</div>'
-        + '</div>'
+        + repInputs
       + '</div>'
       + '<div style="padding:0 14px 10px">'
         + '<button class="notes-btn' + (savedNote ? ' notes-btn-active' : '') + '" onclick="toggleNote(' + ei + ')">'
@@ -189,7 +192,7 @@ function renderLogView() {
   document.getElementById('exerciseArea').innerHTML = html;
 }
 
-function handleExInput(el) {
+function handleKgInput(el) {
   const dayObj = state.programme.find(d => d.day === state.currentDay);
   if (!dayObj) return;
   const key = getSessionKey(dayObj.day);
@@ -199,35 +202,52 @@ function handleExInput(el) {
   const isDeload = state.week === 4;
   const setsToShow = isDeload ? Math.min(2, ex.sets) : ex.sets;
   if (!state.logData[key][ex.name]) state.logData[key][ex.name] = [];
-  // write same value to all sets
   for (let s = 0; s < setsToShow; s++) {
     if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
-    state.logData[key][ex.name][s][el.dataset.field] = el.value;
+    state.logData[key][ex.name][s].kg = el.value;
   }
-  // update status badge live
-  const exSets = state.logData[key][ex.name];
-  const kg = (exSets[0] && exSets[0].kg) || '';
-  const reps = (exSets[0] && exSets[0].reps) || '';
-  const repTarget = parseRepTarget(ex.target);
-  const repsNum = parseInt(reps);
-  const prs = computePRs();
-  const isPR = prs[ex.name] && kg && parseFloat(kg) >= prs[ex.name];
-  const failed = reps !== '' && repTarget !== null && repsNum < repTarget;
-  const passed = reps !== '' && repTarget !== null && repsNum >= repTarget;
-  const statusSlot = document.getElementById('statusbadge-' + ei);
-  if (statusSlot) {
-    if (isPR) {
-      statusSlot.innerHTML = '<div class="pr-star">★ PR</div>';
-    } else if (failed) {
-      statusSlot.innerHTML = '<div class="fail-badge">fail</div>';
-    } else if (passed) {
-      statusSlot.innerHTML = '<div class="pass-badge">pass</div>';
-    } else {
-      statusSlot.innerHTML = '';
-    }
-  }
+  updateStatusBadge(ei, ex, state.logData[key][ex.name]);
 }
 
+function handleRepInput(el) {
+  const dayObj = state.programme.find(d => d.day === state.currentDay);
+  if (!dayObj) return;
+  const key = getSessionKey(dayObj.day);
+  if (!state.logData[key]) state.logData[key] = {};
+  const ei = parseInt(el.dataset.ex);
+  const s = parseInt(el.dataset.set);
+  const ex = dayObj.exercises[ei];
+  if (!state.logData[key][ex.name]) state.logData[key][ex.name] = [];
+  if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
+  state.logData[key][ex.name][s].reps = el.value;
+  // colour this input red if failed
+  const repTarget = parseRepTarget(ex.target);
+  const setFailed = repTarget !== null && el.value !== '' && parseInt(el.value) < repTarget;
+  el.classList.toggle('set-fail', setFailed);
+  el.previousElementSibling && (el.previousElementSibling.style.color = setFailed ? 'var(--danger)' : 'var(--text2)');
+  updateStatusBadge(ei, ex, state.logData[key][ex.name]);
+}
+
+function updateStatusBadge(ei, ex, exSets) {
+  const repTarget = parseRepTarget(ex.target);
+  const kg = (exSets[0] && exSets[0].kg) || '';
+  const prs = computePRs();
+  const isPR = prs[ex.name] && kg && parseFloat(kg) >= prs[ex.name];
+  const anyLogged = exSets.some(function(s) { return s && s.reps !== undefined && s.reps !== ''; });
+  const anyFail = repTarget !== null && exSets.some(function(s) { return s && s.reps !== '' && s.reps !== undefined && parseInt(s.reps) < repTarget; });
+  const allPass = anyLogged && !anyFail;
+  const slot = document.getElementById('statusbadge-' + ei);
+  if (!slot) return;
+  if (isPR) {
+    slot.innerHTML = '<div class="pr-star">★ PR</div>';
+  } else if (anyFail) {
+    slot.innerHTML = '<div class="fail-badge">fail</div>';
+  } else if (allPass) {
+    slot.innerHTML = '<div class="pass-badge">pass</div>';
+  } else {
+    slot.innerHTML = '';
+  }
+}
 function handleFeelEx(el) {
   const dayObj = state.programme.find(d => d.day === state.currentDay);
   if (!dayObj) return;
