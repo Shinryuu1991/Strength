@@ -2,7 +2,7 @@
   "name": "Iron Log",
   "short_name": "Iron Log",
   "description": "Training tracker for Callum's 3:1 loading cycle programme",
-  "start_url": "/",
+  "start_url": "/Strength/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1D9E75",

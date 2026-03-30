@@ -1,12 +1,12 @@
 const CACHE = 'ironlog-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/Strength/',
+  '/Strength/index.html',
+  '/Strength/style.css',
+  '/Strength/app.js',
+  '/Strength/manifest.json',
+  '/Strength/icons/icon-192.png',
+  '/Strength/icons/icon-512.png',
   'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
 ];
