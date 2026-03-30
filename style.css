@@ -273,6 +273,80 @@ html, body {
   border: 0.5px solid var(--gold);
 }
 
+.pr-star {
+  font-family: var(--fd);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  background: var(--gold-bg);
+  border: 0.5px solid var(--gold);
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: .02em;
+  animation: prPop .35s ease;
+}
+
+@keyframes prPop {
+  0% { transform: scale(0.7); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pass-badge {
+  font-family: var(--fm);
+  font-size: 11px;
+  background: var(--accent-bg);
+  color: var(--accent-text);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 0.5px solid var(--accent);
+}
+
+.fail-badge {
+  font-family: var(--fm);
+  font-size: 11px;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 0.5px solid var(--danger);
+}
+
+.notes-btn {
+  font-family: var(--fm);
+  font-size: 12px;
+  color: var(--text2);
+  background: none;
+  border: 0.5px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+.notes-btn:hover { border-color: var(--accent); color: var(--accent); }
+.notes-btn-active {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.note-input {
+  margin-top: 8px;
+  width: 100%;
+  font-family: var(--fm);
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg2);
+  color: var(--text);
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+.note-input:focus { outline: none; }
+
 .col-header {
   display: grid;
   grid-template-columns: 28px 1fr 1fr 80px;

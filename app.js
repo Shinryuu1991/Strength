@@ -39,6 +39,7 @@ let state = {
   openEditDay: null,
   renamingDay: null,
   prevView: 'log',
+  openNotes: {},
 };
 
 /* ── PERSISTENCE ── */
@@ -137,10 +138,14 @@ function renderLogView() {
     const passed = reps !== '' && repTarget !== null && repsNum >= repTarget;
 
     const statusBadge = failed
-      ? '<div style="font-family:var(--fm);font-size:11px;background:var(--danger-bg);color:var(--danger-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--danger)">fail</div>'
+      ? '<div class="fail-badge">fail</div>'
       : passed
-        ? '<div style="font-family:var(--fm);font-size:11px;background:var(--accent-bg);color:var(--accent-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--accent)">pass</div>'
+        ? '<div class="pass-badge">pass</div>'
         : '';
+
+    const noteKey = 'note_' + ei;
+    const savedNote = (saved['__notes__'] && saved['__notes__'][ex.name]) || '';
+    const noteOpen = state.openNotes && state.openNotes[getSessionKey(dayObj.day) + '_' + ei];
 
     html += '<div class="exercise-card ' + ex.type + '" id="excard-' + ei + '">'
       + '<div class="exercise-name-row">'
@@ -153,10 +158,13 @@ function renderLogView() {
             + '<option value="H"' + (feelVal==='H'?' selected':'') + '>H — Hard</option>'
             + '<option value="F"' + (feelVal==='F'?' selected':'') + '>F — Failed</option>'
           + '</select>'
-          + (isPR ? '<div class="pr-badge">PR</div>' : statusBadge || ('<div class="target-badge">' + ex.target + '</div>'))
         + '</div>'
       + '</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 14px 12px;align-items:end">'
+      + '<div style="display:flex;align-items:center;gap:6px;padding:0 14px 8px">'
+        + '<div class="target-badge" id="targetbadge-' + ei + '">' + ex.target + '</div>'
+        + '<div id="statusbadge-' + ei + '">' + (isPR ? '<div class="pr-star">★ PR</div>' : statusBadge) + '</div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 14px 10px;align-items:end">'
         + '<div>'
             + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">kg</div>'
             + '<input class="set-input" type="number" inputmode="decimal" min="0" step="0.5" placeholder="—" value="' + kg + '" data-ex="' + ei + '" data-field="kg" oninput="handleExInput(this)">'
@@ -169,6 +177,12 @@ function renderLogView() {
             + '<div style="font-family:var(--fm);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;text-align:center">sets</div>'
             + '<div style="font-family:var(--fm);font-size:14px;color:var(--text);text-align:center;padding:8px 0;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2)">' + setsToShow + '</div>'
         + '</div>'
+      + '</div>'
+      + '<div style="padding:0 14px 10px">'
+        + '<button class="notes-btn' + (savedNote ? ' notes-btn-active' : '') + '" onclick="toggleNote(' + ei + ')">'
+          + (savedNote ? '✎ Edit note' : '+ Add note')
+        + '</button>'
+        + (noteOpen ? '<textarea class="note-input" data-ex="' + ei + '" placeholder="How did this go? Form cues, observations…" oninput="handleNote(this)">' + savedNote + '</textarea>' : '')
       + '</div>'
     + '</div>';
   });
@@ -190,7 +204,7 @@ function handleExInput(el) {
     if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
     state.logData[key][ex.name][s][el.dataset.field] = el.value;
   }
-  // update pass/fail badge live
+  // update status badge live
   const exSets = state.logData[key][ex.name];
   const kg = (exSets[0] && exSets[0].kg) || '';
   const reps = (exSets[0] && exSets[0].reps) || '';
@@ -200,30 +214,16 @@ function handleExInput(el) {
   const isPR = prs[ex.name] && kg && parseFloat(kg) >= prs[ex.name];
   const failed = reps !== '' && repTarget !== null && repsNum < repTarget;
   const passed = reps !== '' && repTarget !== null && repsNum >= repTarget;
-  const card = document.getElementById('excard-' + ei);
-  if (card) {
-    const badgeSlot = card.querySelector('.pr-badge, .target-badge, [data-badge]');
-    // find the last element in the name-row flex container (the badge area)
-    const nameRow = card.querySelector('.exercise-name-row > div:last-child');
-    if (nameRow) {
-      // remove old badge (last child after feel select)
-      const oldBadge = nameRow.lastElementChild;
-      if (oldBadge && oldBadge !== nameRow.querySelector('select')) oldBadge.remove();
-      const badge = document.createElement('div');
-      if (isPR) {
-        badge.className = 'pr-badge';
-        badge.textContent = 'PR';
-      } else if (failed) {
-        badge.style.cssText = 'font-family:var(--fm);font-size:11px;background:var(--danger-bg);color:var(--danger-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--danger)';
-        badge.textContent = 'fail';
-      } else if (passed) {
-        badge.style.cssText = 'font-family:var(--fm);font-size:11px;background:var(--accent-bg);color:var(--accent-text);padding:2px 8px;border-radius:12px;border:0.5px solid var(--accent)';
-        badge.textContent = 'pass';
-      } else {
-        badge.className = 'target-badge';
-        badge.textContent = ex.target;
-      }
-      nameRow.appendChild(badge);
+  const statusSlot = document.getElementById('statusbadge-' + ei);
+  if (statusSlot) {
+    if (isPR) {
+      statusSlot.innerHTML = '<div class="pr-star">★ PR</div>';
+    } else if (failed) {
+      statusSlot.innerHTML = '<div class="fail-badge">fail</div>';
+    } else if (passed) {
+      statusSlot.innerHTML = '<div class="pass-badge">pass</div>';
+    } else {
+      statusSlot.innerHTML = '';
     }
   }
 }
@@ -241,6 +241,25 @@ function handleFeelEx(el) {
     if (!state.logData[key][ex.name][s]) state.logData[key][ex.name][s] = {};
     state.logData[key][ex.name][s].feel = el.value;
   }
+}
+
+function toggleNote(ei) {
+  const sessionKey = getSessionKey(state.currentDay);
+  const noteKey = sessionKey + '_' + ei;
+  if (!state.openNotes) state.openNotes = {};
+  state.openNotes[noteKey] = !state.openNotes[noteKey];
+  renderLogView();
+}
+
+function handleNote(el) {
+  const dayObj = state.programme.find(d => d.day === state.currentDay);
+  if (!dayObj) return;
+  const key = getSessionKey(dayObj.day);
+  const ei = parseInt(el.dataset.ex);
+  const ex = dayObj.exercises[ei];
+  if (!state.logData[key]) state.logData[key] = {};
+  if (!state.logData[key]['__notes__']) state.logData[key]['__notes__'] = {};
+  state.logData[key]['__notes__'][ex.name] = el.value;
 }
 
 function saveSession() { saveState(); showToast('Session logged — ' + getWeekKey()); }
@@ -333,8 +352,8 @@ function buildProgressChart() {
         label: lift, data,
         borderColor: '#1D9E75',
         backgroundColor: 'rgba(29,158,117,0.08)',
-        pointBackgroundColor: data.map(v => v ? '#1D9E75' : 'transparent'),
-        pointRadius: 5, tension: .3, fill: true, spanGaps: false,
+        pointBackgroundColor: data.map(function(v){return v ? '#1D9E75' : 'transparent';}),
+        pointRadius: data.map(function(v){return v ? 5 : 0;}), tension: .3, fill: true, spanGaps: true,
       }]
     },
     options: {
